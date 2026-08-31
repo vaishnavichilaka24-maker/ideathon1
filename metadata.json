@@ -1,0 +1,6 @@
+{
+  "name": "Gemini Reflections Journal",
+  "description": "Specialized Psychological First Aid (PFA) and compassion fatigue debriefing sanctuary for caregivers, humanitarian aid workers, and frontline responders, powered by Gemini and user-isolated Cloud Firestore.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
