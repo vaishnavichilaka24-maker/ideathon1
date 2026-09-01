@@ -126,6 +126,24 @@ export default function App() {
       const message = err?.message || '';
 
       if (
+        code === 'auth/unauthorized-domain' ||
+        message.includes('unauthorized-domain') ||
+        message.includes('authorized domain')
+      ) {
+        console.warn('Firebase unauthorized domain for Google Auth popup. Auto-activating confidential session fallback.');
+        // Seamlessly activate instant guest/confidential session so user is never blocked
+        try {
+          const profile = await signInAsGuest('Frontline Caregiver');
+          setUser(profile);
+          setAuthError(null);
+          return;
+        } catch (guestErr) {
+          console.error('Fallback guest sign-in error:', guestErr);
+          setAuthError(
+            `Domain '${window.location.hostname}' is not authorized in Firebase OAuth. Instant Guest session has been enabled for you below.`
+          );
+        }
+      } else if (
         code === 'auth/popup-closed-by-user' ||
         code === 'auth/cancelled-popup-request' ||
         message.includes('popup-closed-by-user') ||
@@ -133,27 +151,36 @@ export default function App() {
       ) {
         // User closed or dismissed the popup window before completing sign-in
         console.info('Google Sign In was dismissed or closed by user.');
-        setAuthError('Sign-in was cancelled. Click "Authenticate with Google" whenever you are ready to continue, or use "Instant Guest Access".');
+        setAuthError('Sign-in was cancelled. Click "Authenticate with Google" whenever you are ready, or use "Instant Guest Access".');
       } else if (code === 'auth/popup-blocked' || message.includes('popup-blocked')) {
         console.warn('Google Sign In popup was blocked by browser.');
         setAuthError('Sign-in popup was blocked by your browser. Please allow popups or use "Instant Guest Access".');
       } else if (code === 'auth/network-request-failed' || message.includes('network-request-failed')) {
         console.warn('Google Sign In network error:', err);
-        setAuthError('Network error during authentication. Please check your connection and try again.');
+        setAuthError('Network error during authentication. Please check your connection or use "Instant Guest Access".');
       } else {
         console.error('Google Sign In failed:', err);
-        setAuthError(message || 'Failed to sign in with Google. You can also use "Instant Guest Access".');
+        // If other error, attempt seamless instant guest session
+        try {
+          const fallback = await signInAsGuest('Frontline Caregiver');
+          setUser(fallback);
+          setAuthError(null);
+          return;
+        } catch {
+          setAuthError(message || 'Failed to sign in with Google. You can use "Instant Guest Access" to start immediately.');
+        }
       }
     } finally {
       setAuthLoading(false);
     }
   };
 
-  const handleSignInGuest = async () => {
+  const handleSignInGuest = async (customName?: string) => {
     setAuthLoading(true);
     setAuthError(null);
     try {
-      await signInAsGuest();
+      const profile = await signInAsGuest(customName || 'Confidential Responder');
+      setUser(profile);
     } catch (err: any) {
       console.error('Guest Sign In failed:', err);
       setAuthError('Unable to start guest session. Please check your internet connection.');

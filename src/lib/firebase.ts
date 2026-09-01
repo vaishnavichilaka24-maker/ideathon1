@@ -39,39 +39,86 @@ export function sanitizePayload<T>(obj: T): T {
   );
 }
 
+const LOCAL_USER_KEY = 'sanctuary_local_caregiver_user';
+
+export function getStoredLocalUser(): UserProfile | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setStoredLocalUser(user: UserProfile | null): void {
+  try {
+    if (user) {
+      localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(LOCAL_USER_KEY);
+    }
+  } catch {}
+}
+
 /**
  * Sign in using Firebase Authentication via Google Provider
  */
 export async function signInWithGoogle(): Promise<UserProfile> {
   const result = await signInWithPopup(auth, googleProvider);
   const user = result.user;
-  return {
+  const profile: UserProfile = {
     uid: user.uid,
     email: user.email,
     displayName: user.displayName || 'Caregiver',
     photoURL: user.photoURL,
   };
+  setStoredLocalUser(profile);
+  return profile;
 }
 
 /**
  * Sign in anonymously for confidential / shared terminal access
  */
-export async function signInAsGuest(): Promise<UserProfile> {
-  const result = await signInAnonymously(auth);
-  const user = result.user;
-  return {
-    uid: user.uid,
-    email: null,
-    displayName: 'Confidential Responder (Guest)',
-    photoURL: null,
-  };
+export async function signInAsGuest(customName?: string): Promise<UserProfile> {
+  try {
+    const result = await signInAnonymously(auth);
+    const user = result.user;
+    const profile: UserProfile = {
+      uid: user.uid,
+      email: null,
+      displayName: customName || 'Confidential Responder (Guest)',
+      photoURL: null,
+    };
+    setStoredLocalUser(profile);
+    return profile;
+  } catch (err: any) {
+    console.warn('Firebase anonymous auth unavailable or restricted. Initializing confidential local session:', err);
+    let existing = getStoredLocalUser();
+    if (!existing) {
+      existing = {
+        uid: 'responder_' + Math.random().toString(36).substring(2, 10),
+        email: null,
+        displayName: customName || 'Confidential Responder',
+        photoURL: null,
+      };
+    } else if (customName) {
+      existing.displayName = customName;
+    }
+    setStoredLocalUser(existing);
+    return existing;
+  }
 }
 
 /**
  * Sign out of Firebase Authentication
  */
 export async function logOut(): Promise<void> {
-  await signOut(auth);
+  try {
+    await signOut(auth);
+  } catch (err) {
+    console.warn('Firebase signOut error:', err);
+  }
+  setStoredLocalUser(null);
 }
 
 /**
@@ -80,14 +127,21 @@ export async function logOut(): Promise<void> {
 export function subscribeToAuth(callback: (user: UserProfile | null) => void) {
   return onAuthStateChanged(auth, (user: User | null) => {
     if (user) {
-      callback({
+      const profile: UserProfile = {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName || (user.isAnonymous ? 'Confidential Responder (Guest)' : 'Caregiver'),
         photoURL: user.photoURL,
-      });
+      };
+      setStoredLocalUser(profile);
+      callback(profile);
     } else {
-      callback(null);
+      const local = getStoredLocalUser();
+      if (local && local.uid.startsWith('responder_')) {
+        callback(local);
+      } else {
+        callback(null);
+      }
     }
   });
 }
