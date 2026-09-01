@@ -10,6 +10,7 @@ import {
 } from './types';
 import {
   signInWithGoogle,
+  signInAsGuest,
   logOut,
   subscribeToAuth,
 } from './lib/firebase';
@@ -132,17 +133,30 @@ export default function App() {
       ) {
         // User closed or dismissed the popup window before completing sign-in
         console.info('Google Sign In was dismissed or closed by user.');
-        setAuthError('Sign-in was cancelled. Click "Authenticate with Google" whenever you are ready to continue.');
+        setAuthError('Sign-in was cancelled. Click "Authenticate with Google" whenever you are ready to continue, or use "Instant Guest Access".');
       } else if (code === 'auth/popup-blocked' || message.includes('popup-blocked')) {
         console.warn('Google Sign In popup was blocked by browser.');
-        setAuthError('Sign-in popup was blocked by your browser. Please allow popups for this site and try again.');
+        setAuthError('Sign-in popup was blocked by your browser. Please allow popups or use "Instant Guest Access".');
       } else if (code === 'auth/network-request-failed' || message.includes('network-request-failed')) {
         console.warn('Google Sign In network error:', err);
         setAuthError('Network error during authentication. Please check your connection and try again.');
       } else {
         console.error('Google Sign In failed:', err);
-        setAuthError(message || 'Failed to sign in with Google. Please try again.');
+        setAuthError(message || 'Failed to sign in with Google. You can also use "Instant Guest Access".');
       }
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleSignInGuest = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+    try {
+      await signInAsGuest();
+    } catch (err: any) {
+      console.error('Guest Sign In failed:', err);
+      setAuthError('Unable to start guest session. Please check your internet connection.');
     } finally {
       setAuthLoading(false);
     }
@@ -363,6 +377,7 @@ export default function App() {
         ) : !user ? (
           <AuthLanding
             onSignIn={handleSignIn}
+            onSignInGuest={handleSignInGuest}
             isLoading={authLoading}
             errorMessage={authError}
             onClearError={() => setAuthError(null)}

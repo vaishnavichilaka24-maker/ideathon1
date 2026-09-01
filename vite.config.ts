@@ -4,8 +4,10 @@ import path from 'path';
 import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
+  // Use /ideathon1/ only in GitHub Pages workflow, otherwise default to '/' for dev and cloud run
+  const isGithubPages = process.env.GITHUB_ACTIONS === 'true' || process.env.GITHUB_PAGES === 'true';
   return {
-    base: '/ideathon1/',
+    base: isGithubPages ? '/ideathon1/' : '/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

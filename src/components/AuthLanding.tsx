@@ -3,6 +3,7 @@ import { HeartHandshake, Shield, Database, Wind, Lock, CheckCircle2, PhoneCall, 
 
 interface AuthLandingProps {
   onSignIn: () => void;
+  onSignInGuest?: () => void;
   isLoading: boolean;
   errorMessage: string | null;
   onClearError?: () => void;
@@ -13,6 +14,7 @@ interface AuthLandingProps {
 
 export const AuthLanding: React.FC<AuthLandingProps> = ({
   onSignIn,
+  onSignInGuest,
   isLoading,
   errorMessage,
   onClearError,
@@ -95,13 +97,26 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({
               <span>{isLoading ? 'Securing Session...' : 'Authenticate with Google'}</span>
             </button>
 
+            {onSignInGuest && (
+              <button
+                id="btn-guest-signin"
+                onClick={onSignInGuest}
+                disabled={isLoading}
+                className="inline-flex items-center justify-center gap-2.5 px-5 py-3.5 rounded-2xl bg-teal-500/10 hover:bg-teal-500/20 text-teal-300 border border-teal-500/30 text-sm font-semibold transition disabled:opacity-50 cursor-pointer"
+                title="Instant anonymous session without Google account required"
+              >
+                <Shield className="w-4 h-4 text-teal-400" />
+                <span>Instant Guest Access</span>
+              </button>
+            )}
+
             <button
               id="btn-landing-breathing"
               onClick={onOpenBreathing}
-              className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-teal-300 border border-teal-500/30 text-sm font-medium transition cursor-pointer"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl bg-neutral-900 hover:bg-neutral-800 text-neutral-300 border border-neutral-700 text-sm font-medium transition cursor-pointer"
             >
               <Wind className="w-4 h-4 text-teal-400" />
-              <span>Somatic Box Breathing</span>
+              <span>Box Breathing</span>
             </button>
 
             <button

@@ -3,6 +3,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInAnonymously,
   signOut,
   onAuthStateChanged,
   User,
@@ -47,8 +48,22 @@ export async function signInWithGoogle(): Promise<UserProfile> {
   return {
     uid: user.uid,
     email: user.email,
-    displayName: user.displayName,
+    displayName: user.displayName || 'Caregiver',
     photoURL: user.photoURL,
+  };
+}
+
+/**
+ * Sign in anonymously for confidential / shared terminal access
+ */
+export async function signInAsGuest(): Promise<UserProfile> {
+  const result = await signInAnonymously(auth);
+  const user = result.user;
+  return {
+    uid: user.uid,
+    email: null,
+    displayName: 'Confidential Responder (Guest)',
+    photoURL: null,
   };
 }
 
@@ -68,7 +83,7 @@ export function subscribeToAuth(callback: (user: UserProfile | null) => void) {
       callback({
         uid: user.uid,
         email: user.email,
-        displayName: user.displayName,
+        displayName: user.displayName || (user.isAnonymous ? 'Confidential Responder (Guest)' : 'Caregiver'),
         photoURL: user.photoURL,
       });
     } else {
@@ -76,3 +91,4 @@ export function subscribeToAuth(callback: (user: UserProfile | null) => void) {
     }
   });
 }
+
