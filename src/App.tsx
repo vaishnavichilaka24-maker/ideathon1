@@ -87,7 +87,7 @@ export default function App() {
         }
       },
       (err) => {
-        console.error('Failed to load user sessions:', err);
+        console.warn('User sessions live-sync notice:', err);
       }
     );
 
@@ -108,7 +108,7 @@ export default function App() {
         setMessages(fetchedMessages);
       },
       (err) => {
-        console.error('Failed to load session messages:', err);
+        console.warn('Session messages live-sync notice:', err);
       }
     );
 

@@ -125,24 +125,39 @@ export async function logOut(): Promise<void> {
  * Listen to user auth state changes
  */
 export function subscribeToAuth(callback: (user: UserProfile | null) => void) {
-  return onAuthStateChanged(auth, (user: User | null) => {
-    if (user) {
-      const profile: UserProfile = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName || (user.isAnonymous ? 'Confidential Responder (Guest)' : 'Caregiver'),
-        photoURL: user.photoURL,
-      };
-      setStoredLocalUser(profile);
-      callback(profile);
-    } else {
-      const local = getStoredLocalUser();
-      if (local && local.uid.startsWith('responder_')) {
-        callback(local);
-      } else {
-        callback(null);
+  try {
+    return onAuthStateChanged(
+      auth,
+      (user: User | null) => {
+        if (user) {
+          const profile: UserProfile = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || (user.isAnonymous ? 'Confidential Responder (Guest)' : 'Caregiver'),
+            photoURL: user.photoURL,
+          };
+          setStoredLocalUser(profile);
+          callback(profile);
+        } else {
+          const local = getStoredLocalUser();
+          if (local && local.uid.startsWith('responder_')) {
+            callback(local);
+          } else {
+            callback(null);
+          }
+        }
+      },
+      (err) => {
+        console.warn('Firebase onAuthStateChanged notice:', err);
+        const local = getStoredLocalUser();
+        callback(local || null);
       }
-    }
-  });
+    );
+  } catch (err) {
+    console.warn('Firebase subscribeToAuth catch:', err);
+    const local = getStoredLocalUser();
+    callback(local || null);
+    return () => {};
+  }
 }
 
