@@ -5,6 +5,7 @@ interface AuthLandingProps {
   onSignIn: () => void;
   isLoading: boolean;
   errorMessage: string | null;
+  onClearError?: () => void;
   onOpenThreatModel: () => void;
   onOpenBreathing: () => void;
   onOpenCrisis: () => void;
@@ -14,6 +15,7 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({
   onSignIn,
   isLoading,
   errorMessage,
+  onClearError,
   onOpenThreatModel,
   onOpenBreathing,
   onOpenCrisis,
@@ -39,13 +41,24 @@ export const AuthLanding: React.FC<AuthLandingProps> = ({
           {errorMessage && (
             <div
               id="auth-error-banner"
-              className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-sm text-left flex items-start gap-2.5 max-w-xl mx-auto"
+              className="p-3.5 rounded-2xl bg-neutral-900 border border-neutral-700 text-sm text-left flex items-start justify-between gap-2.5 max-w-xl mx-auto shadow-md"
             >
-              <div className="w-2 h-2 rounded-full bg-rose-500 mt-1.5 flex-shrink-0" />
-              <div>
-                <p className="font-semibold text-xs">Authentication Notice</p>
-                <p className="text-xs text-rose-200/90">{errorMessage}</p>
+              <div className="flex items-start gap-2.5">
+                <div className="w-2 h-2 rounded-full bg-teal-400 mt-1.5 flex-shrink-0" />
+                <div>
+                  <p className="font-semibold text-xs text-neutral-200">Authentication Notice</p>
+                  <p className="text-xs text-neutral-300 leading-relaxed mt-0.5">{errorMessage}</p>
+                </div>
               </div>
+              {onClearError && (
+                <button
+                  onClick={onClearError}
+                  className="text-neutral-400 hover:text-neutral-200 text-xs px-2 py-0.5 rounded-md transition cursor-pointer"
+                  title="Dismiss notification"
+                >
+                  Dismiss
+                </button>
+              )}
             </div>
           )}
 

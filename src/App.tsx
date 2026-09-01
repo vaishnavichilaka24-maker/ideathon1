@@ -121,8 +121,28 @@ export default function App() {
     try {
       await signInWithGoogle();
     } catch (err: any) {
-      console.error('Google Sign In failed:', err);
-      setAuthError(err?.message || 'Failed to sign in with Google. Please try again.');
+      const code = err?.code || '';
+      const message = err?.message || '';
+
+      if (
+        code === 'auth/popup-closed-by-user' ||
+        code === 'auth/cancelled-popup-request' ||
+        message.includes('popup-closed-by-user') ||
+        message.includes('cancelled-popup-request')
+      ) {
+        // User closed or dismissed the popup window before completing sign-in
+        console.info('Google Sign In was dismissed or closed by user.');
+        setAuthError('Sign-in was cancelled. Click "Authenticate with Google" whenever you are ready to continue.');
+      } else if (code === 'auth/popup-blocked' || message.includes('popup-blocked')) {
+        console.warn('Google Sign In popup was blocked by browser.');
+        setAuthError('Sign-in popup was blocked by your browser. Please allow popups for this site and try again.');
+      } else if (code === 'auth/network-request-failed' || message.includes('network-request-failed')) {
+        console.warn('Google Sign In network error:', err);
+        setAuthError('Network error during authentication. Please check your connection and try again.');
+      } else {
+        console.error('Google Sign In failed:', err);
+        setAuthError(message || 'Failed to sign in with Google. Please try again.');
+      }
     } finally {
       setAuthLoading(false);
     }
@@ -345,6 +365,7 @@ export default function App() {
             onSignIn={handleSignIn}
             isLoading={authLoading}
             errorMessage={authError}
+            onClearError={() => setAuthError(null)}
             onOpenThreatModel={() => setIsThreatModalOpen(true)}
             onOpenBreathing={() => setIsBreathingOpen(true)}
             onOpenCrisis={() => setIsCrisisOpen(true)}
