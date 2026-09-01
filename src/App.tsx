@@ -76,14 +76,31 @@ export default function App() {
 
     const unsubscribe = subscribeUserSessions(
       user.uid,
-      (fetchedSessions) => {
+      async (fetchedSessions) => {
         setSessions(fetchedSessions);
-        // If no active session or current active is deleted, auto-select the first one
         if (fetchedSessions.length > 0) {
           setActiveSessionId((prev) => {
             const exists = fetchedSessions.some((s) => s.id === prev);
-            return exists ? prev : fetchedSessions[0].id;
+            return exists && prev ? prev : fetchedSessions[0].id;
           });
+        } else {
+          // If the user has no sessions yet, automatically create their first confidential debrief session
+          try {
+            const firstSession = await createJournalSession(
+              user.uid,
+              'Shift Critical Incident Debrief',
+              'pfa-debrief',
+              {
+                role: 'healthcare',
+                severity: 'moderate-stress',
+                stressLevel: 6,
+                somaticAreas: ['chest-tightness'],
+              }
+            );
+            setActiveSessionId(firstSession.id);
+          } catch (createErr) {
+            console.warn('Auto-create initial debrief session notice:', createErr);
+          }
         }
       },
       (err) => {
@@ -442,6 +459,7 @@ export default function App() {
               onOpenSphereOfControl={() => setIsSphereOpen(true)}
               onOpenCompassionSpark={() => setIsCompassionSparkOpen(true)}
               onOpenSoundscapes={() => setIsSoundscapesOpen(true)}
+              onNewSession={handleNewSession}
             />
           </div>
         )}

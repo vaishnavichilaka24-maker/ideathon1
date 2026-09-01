@@ -51,6 +51,7 @@ interface JournalEditorProps {
   onOpenSphereOfControl?: () => void;
   onOpenCompassionSpark?: () => void;
   onOpenSoundscapes?: () => void;
+  onNewSession?: (mode?: ReflectionMode) => void;
 }
 
 const ROLE_LABELS: Record<CaregiverRole, { label: string; icon: string }> = {
@@ -118,6 +119,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
   onOpenSphereOfControl,
   onOpenCompassionSpark,
   onOpenSoundscapes,
+  onNewSession,
 }) => {
   const { themeConfig } = useSanctuaryTheme();
   const [inputText, setInputText] = useState('');
@@ -237,9 +239,18 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({
       <div className="flex-1 flex flex-col items-center justify-center p-8 text-neutral-400 text-center bg-neutral-950">
         <HeartHandshake className="w-12 h-12 text-teal-400/60 mb-4 animate-pulse" />
         <h2 className="text-xl font-bold text-neutral-200">No Active Debrief Session</h2>
-        <p className="text-xs max-w-md mt-1 text-neutral-400">
+        <p className="text-xs max-w-md mt-1 mb-6 text-neutral-400">
           Select a previous shift debrief from your archive or launch a new Psychological First Aid session.
         </p>
+        {onNewSession && (
+          <button
+            onClick={() => onNewSession('pfa-debrief')}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-medium text-sm transition shadow-md shadow-teal-900/30 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Start Shift Debrief</span>
+          </button>
+        )}
       </div>
     );
   }
